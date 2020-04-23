@@ -12,10 +12,13 @@ class LRUCache:
     to every node stored in the cache.
     """
     def __init__(self, limit=10):
-        self.order = DoublyLinkedList()
+        self.ordering = DoublyLinkedList()
         self.size = 0
         self.limit = limit
         self.storage = {}
+
+    def __len__(self):
+        return self.size
 
     """
     Retrieves the value associated with the given key. Also
@@ -25,11 +28,13 @@ class LRUCache:
     key-value pair doesn't exist in the cache.
     """
     def get(self, key):
+        # check to see that the key is in our cache
         if key in self.storage:
+            # fetch the DLL node which is the value of this key
             node = self.storage[key]
-            self.order.move_to_end(node)
+            self.ordering.move_to_front(node)
 
-            return node.value[1]
+            return node.value[1] # get second value in the tuple
         else:
             return None
 
@@ -44,18 +49,25 @@ class LRUCache:
     the newly-specified value.
     """
     def set(self, key, value):
+        # check if key is in the cache
         if key in self.storage:
             node = self.storage[key]
+            # overwrite the old value
             node.value = (key, value)
-            self.order.move_to_end(node)
+            # move this node to the tail
+            self.ordering.move_to_end(node)
 
             return
-
         if self.size is self.limit:
-            del self.storage[self.order.head.value[0]]
-            self.order.remove_from_head()
+            # evict the least recently used element
+            oldest_key = self.ordering.head.value[0]
+            del self.storage[oldest_key]
+            # remove the head node from the DLL
+            self.ordering.remove_from_head()
             self.size -= 1
-            
-        self.order.add_to_tail((key, value))
-        self.storage[key] = self.order.tail
+
+        # key is not in the self.storage and we still have room in our cache
+        # add the key and value    
+        self.ordering.add_to_tail((key, value))
+        self.storage[key] = self.ordering.tail
         self.size += 1 
